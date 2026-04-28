@@ -9,7 +9,6 @@ import pandas as pd
 import time
 import random
 
-
 driver = webdriver.Chrome()
 err_repo = pd.DataFrame(columns=["id", "soup"])
 
@@ -19,6 +18,8 @@ with open(filename, "r") as f:
     urls = csv.reader(f)
     for line in urls:
         contents.append(line)
+
+
 
 def add_new_info(y):
     z = " https://lop.parl.ca/sites/ParlInfo/default/en_CA/People/Profile?personId="+y
@@ -61,16 +62,19 @@ def add_new_info(y):
         err_repo.loc[len(err_repo)] = [y, soup]
         return data
 
-list_dic = []
-for x in contents[10:30]:
-    y = x[0]
-    list_dic.append(add_new_info(y))
+for i in range(2300, len(contents), 100):
+    driver.quit()
+    driver = webdriver.Chrome()
+    list_dic = []
+    for x in contents[i:i+100]:
+        y = x[0]
+        list_dic.append(add_new_info(y))
 
-df = pd.DataFrame()
-for n, dic in enumerate(list_dic):
-    for key, value in dic.items():
-        df.loc[n, key] = value
+    df = pd.DataFrame()
+    for n, dic in enumerate(list_dic):
+        for key, value in dic.items():
+            df.loc[n, key] = value
 
-df.to_csv("output/MP_ID.csv", header=True, index=False, mode="w",sep=";")
-if len(err_repo) > 0:
-    err_repo.to_csv("output/err_ID.csv", header=True, index=False, mode="w",sep=";")
+    df.to_csv("output/MP_ID/MP_ID_"+str(i)+".csv", header=True, index=False, mode="w",sep=";")
+    if len(err_repo) > 0:
+        err_repo.to_csv("output/err_ID.csv", header=True, index=False, mode="w",sep=";")
