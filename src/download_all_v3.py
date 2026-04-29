@@ -6,8 +6,7 @@ from selenium.webdriver.common.by import By
 import csv
 from bs4 import BeautifulSoup
 import pandas as pd
-import time
-import random
+
 
 driver = webdriver.Chrome()
 
@@ -58,20 +57,44 @@ def add_new_info(y):
     if success:
         return data
     else:
+        data = {}
         data["erro"] = y
         return data
 
-for i in range(0, len(contents), 100):
-    driver.quit()
-    driver = webdriver.Chrome()
-    list_dic = []
-    for x in contents[i:i+100]:
-        y = x[0]
-        list_dic.append(add_new_info(y))
+list_dic = []
 
-    df = pd.DataFrame()
-    for n, dic in enumerate(list_dic):
-        for key, value in dic.items():
-            df.loc[n, key] = value
+erro_count = 0
+stop_index = 0
+before_first_erro_len = 0
+for x in contents:
+    erro_count = 0
+    stop_index = 0
+    y = x[0]
+    dic_temp = add_new_info(y)
+    list_dic.append(dic_temp)
 
-    df.to_csv("output/MP_ID/MP_ID_"+str(i)+".csv", header=True, index=False, mode="w",sep=";")
+    if len(dic_temp) <= 1:
+        if erro_count == 0:
+            stop_index = contents.index(x)
+            before_first_erro_len = len(list_dic)-1
+        erro_count += 1
+        driver.quit()
+        driver = webdriver.Chrome()
+    else:
+        erro_count = 0
+
+    if erro_count == 3:
+        print("连续3次错误，停止程序，列表序号：", stop_index)
+        while (len(list_dic) != before_first_erro_len):
+            list_dic.pop()
+        break
+        
+df = pd.DataFrame()
+for n, dic in enumerate(list_dic):
+    for key, value in dic.items():
+        df.loc[n, key] = value
+
+if erro_count == 3:
+    df.to_csv("output/MP_index_"+str(stop_index)+".csv", header=True, index=False, mode="w",sep=";")
+else:
+    df.to_csv("output/MP.csv", header=True, index=False, mode="w",sep=";")

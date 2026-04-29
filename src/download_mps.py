@@ -42,3 +42,4 @@ df = pd.DataFrame(col2).T
 rows = pd.DataFrame(col1).T
 df2 = pd.concat([rows, df])
 df2.to_csv("output/MP_ID_"+z1+".csv", header=False, index=False, mode="w",sep=";")
+

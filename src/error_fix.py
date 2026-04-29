@@ -1,25 +1,13 @@
-import os
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import csv
 from bs4 import BeautifulSoup
-import pandas as pd
-import time
-import random
 
+df = pd.read_csv("output/MP.csv", sep=";")
+erro_list = df["erro"].dropna().tolist()
 driver = webdriver.Chrome()
-
-filename = r"input/Link_ID.csv"
-contents = []
-with open(filename, "r") as f:
-    urls = csv.reader(f)
-    for line in urls:
-        contents.append(line)
-
-
-
 def add_new_info(y):
     z = " https://lop.parl.ca/sites/ParlInfo/default/en_CA/People/Profile?personId="+y
     success = False
@@ -58,20 +46,19 @@ def add_new_info(y):
     if success:
         return data
     else:
+        data = {}
         data["erro"] = y
         return data
+for id in erro_list:
+    data = add_new_info(str(int(id)))
+    index = df[df["erro"] == "some_value"].index
+    print(index)
+    print(data)
+    for key, value in data:
+        df.loc[index, key] = value
 
-for i in range(0, len(contents), 100):
-    driver.quit()
-    driver = webdriver.Chrome()
-    list_dic = []
-    for x in contents[i:i+100]:
-        y = x[0]
-        list_dic.append(add_new_info(y))
-
-    df = pd.DataFrame()
-    for n, dic in enumerate(list_dic):
-        for key, value in dic.items():
-            df.loc[n, key] = value
-
-    df.to_csv("output/MP_ID/MP_ID_"+str(i)+".csv", header=True, index=False, mode="w",sep=";")
+if df["Name"].isna().any():
+    print("NaN exist")
+else:
+    df.drop(columns=["erro"])
+    df.to_csv("output/MP_fixed.csv", header=True, index=False, mode="w",sep=";")
